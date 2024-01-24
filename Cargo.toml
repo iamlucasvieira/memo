@@ -3,7 +3,6 @@ name = "memo"
 version = "0.1.0"
 authors = ["Lucas Vieira dos Santos"]
 edition = "2021"
-license = "MIT"
 license-file = "LICENSE"
 description = "Create reminders directly from your terminal."
 homepage = "https://github.com/iamlucasvieira/memo"
