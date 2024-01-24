@@ -1,5 +1,7 @@
 # Memo CLI 📝
-![example workflow](https://github.com/iamlucasvieira/memo/actions/workflows/rust/badge.svg)
+![example workflow](https://github.com/iamlucasvieira/memo/actions/workflows/tests.yml/badge.svg)
+![example workflow](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml/badge.svg)
+
 ## Introduction 🌟
 
 **Memo** is a command-line interface (CLI) application that allows you to manage notes and reminders right from your terminal.
