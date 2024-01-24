@@ -1,6 +1,6 @@
 # Memo CLI 📝
-![example workflow](https://github.com/iamlucasvieira/memo/actions/workflows/tests.yml/badge.svg)
-![example workflow](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml/badge.svg)
+[![Unit Tests](https://github.com/iamlucasvieira/memo/actions/workflows/tests.yml/badge.svg)](https://github.com/iamlucasvieira/memo/actions/workflows/tests.yml)
+[![Linters](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml/badge.svg)](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml)
 
 ## Introduction 🌟
 
