@@ -55,6 +55,27 @@ impl DataFile for MemoData {
         self.content.insert(id, name.to_string());
         Ok(())
     }
+
+    fn remove(&mut self, id: i32) -> Result<()> {
+        if !self.content.contains_key(&id) {
+            return Err(anyhow!("Id '{}' not found", id));
+        }
+        self.content.remove(&id);
+        Ok(())
+    }
+
+    fn as_string(&self) -> Result<String> {
+        let mut s = String::new();
+        for id in self.sorted_ids() {
+            s.push_str(&format!(
+                "{}: {}\n",
+                id,
+                self.get(id)
+                    .ok_or_else(|| anyhow!("Id '{}' not found", id))?
+            ));
+        }
+        return Ok(s);
+    }
 }
 
 /// Implement Display trait for MemoData
@@ -73,6 +94,8 @@ pub trait DataFile: fmt::Display {
     fn sorted_ids(&self) -> Vec<i32>;
     fn get(&self, id: i32) -> Option<&String>;
     fn add(&mut self, id: i32, name: &str) -> Result<()>;
+    fn remove(&mut self, id: i32) -> Result<()>;
+    fn as_string(&self) -> Result<String>;
 }
 
 /// Get file path and file name and check if it exists
@@ -96,6 +119,28 @@ pub fn read_file(file_path: &PathBuf) -> Result<String> {
     Ok(contents)
 }
 
+pub fn write_file(file_path: &PathBuf, content: &str) -> Result<()> {
+    file_exist(file_path)?;
+    let mut temp_file_path = file_path.clone();
+    temp_file_path.set_extension("tmp");
+    let mut temp_file = fs::File::create(&temp_file_path)?;
+    temp_file.write_all(content.as_bytes())?;
+
+    fs::rename(&temp_file_path, &file_path)?;
+    Ok(())
+}
+
+/// Append content to a file given its path and name
+pub fn append_file(file_path: &PathBuf, content: &str) -> Result<()> {
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(file_path)
+        .with_context(|| format!("Could not open file '{}'", file_path.display()))?;
+    writeln!(file, "{}", content)?;
+    Ok(())
+}
+
 // validate a line of file content
 fn vaidate_line(line: &str) -> Result<(i32, String)> {
     let mut parts = line.splitn(2, ':');
@@ -108,6 +153,7 @@ fn vaidate_line(line: &str) -> Result<(i32, String)> {
         .next()
         .and_then(|n| if n.is_empty() { None } else { Some(n) })
         .ok_or_else(|| anyhow!("Missing content in line '{}'", line))?
+        .trim()
         .to_string();
     Ok((id, name))
 }

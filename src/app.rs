@@ -73,6 +73,21 @@ pub fn init(app_config: &AppConfig) -> Result<()> {
     Ok(())
 }
 
+pub fn add(mut d: Box<dyn data::DataFile>, app_config: &AppConfig, content: String) -> Result<()> {
+    let id = d.sorted_ids().last().unwrap_or(&0) + 1;
+    d.add(id, &content)?;
+    let lines = d.as_string()?;
+    data::write_file(&app_config.data_file_path(), &lines)?;
+    Ok(())
+}
+
+pub fn remove(mut d: Box<dyn data::DataFile>, app_config: &AppConfig, id: i32) -> Result<()> {
+    d.remove(id)?;
+    let lines = d.as_string()?;
+    data::write_file(&app_config.data_file_path(), &lines)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

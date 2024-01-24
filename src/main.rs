@@ -19,7 +19,21 @@ struct Cli {
 enum Commands {
     /// Lists all memos
     List,
+    /// Initializes the memo data file
     Init,
+    /// Adds a new memo
+    #[command(arg_required_else_help = true)]
+    Add {
+        /// Memo content
+        content: String,
+    },
+
+    /// Removes a memo
+    #[command(arg_required_else_help = true)]
+    Remove {
+        /// Memo id
+        id: i32,
+    },
 }
 
 fn main() {
@@ -49,6 +63,8 @@ fn main() {
     // Handle other commands
     let err = match cli.command {
         Commands::List => app::list(Box::new(memo_data)),
+        Commands::Add { content } => app::add(Box::new(memo_data), &app_config, content),
+        Commands::Remove { id } => app::remove(Box::new(memo_data), &app_config, id),
         // 'Init' is handled above, so it doesn't need to be here
         _ => unreachable!(), // This should not happen as all cases are covered
     };
