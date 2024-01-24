@@ -1,2 +1,4 @@
 /target
 comtemplate.yml
+# Ignore all .DS_Store files in this directory
+**/.DS_Store
