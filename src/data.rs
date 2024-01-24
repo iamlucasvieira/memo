@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fs, path::PathBuf};
 
 /// Memo data contains the content of the memo file.
 pub struct MemoData {
-    content: HashMap<i32, String>,
+    content: HashMap<u32, String>,
 }
 
 impl MemoData {
@@ -18,7 +18,7 @@ impl MemoData {
     }
 
     /// parse data from file and return a HashMap
-    fn parse(data: String) -> Result<HashMap<i32, String>> {
+    fn parse(data: String) -> Result<HashMap<u32, String>> {
         data.lines()
             .filter(|line| !line.is_empty())
             .map(|line| vaidate_line(line))
@@ -36,19 +36,19 @@ impl DataFile for MemoData {
     }
 
     /// Return sorted ids of items in MemoData
-    fn sorted_ids(&self) -> Vec<i32> {
-        let mut ids: Vec<i32> = self.content.keys().cloned().collect();
+    fn sorted_ids(&self) -> Vec<u32> {
+        let mut ids: Vec<u32> = self.content.keys().cloned().collect();
         ids.sort();
         ids
     }
 
     /// Return content of item with id
-    fn get(&self, id: i32) -> Option<&String> {
+    fn get(&self, id: u32) -> Option<&String> {
         self.content.get(&id)
     }
 
     /// Add item to MemoData
-    fn add(&mut self, id: i32, name: &str) -> Result<()> {
+    fn add(&mut self, id: u32, name: &str) -> Result<()> {
         if self.content.contains_key(&id) {
             return Err(anyhow!("Id '{}' already exists", id));
         }
@@ -56,7 +56,7 @@ impl DataFile for MemoData {
         Ok(())
     }
 
-    fn remove(&mut self, id: i32) -> Result<()> {
+    fn remove(&mut self, id: u32) -> Result<()> {
         if !self.content.contains_key(&id) {
             return Err(anyhow!("Id '{}' not found", id));
         }
@@ -91,10 +91,10 @@ impl fmt::Display for MemoData {
 /// DataFile trait is used to define the methods that a data file must implement.
 pub trait DataFile: fmt::Display {
     fn load(&mut self, app: &app::AppConfig) -> Result<()>;
-    fn sorted_ids(&self) -> Vec<i32>;
-    fn get(&self, id: i32) -> Option<&String>;
-    fn add(&mut self, id: i32, name: &str) -> Result<()>;
-    fn remove(&mut self, id: i32) -> Result<()>;
+    fn sorted_ids(&self) -> Vec<u32>;
+    fn get(&self, id: u32) -> Option<&String>;
+    fn add(&mut self, id: u32, name: &str) -> Result<()>;
+    fn remove(&mut self, id: u32) -> Result<()>;
     fn as_string(&self) -> Result<String>;
 }
 
@@ -131,12 +131,12 @@ pub fn write_file(file_path: &PathBuf, content: &str) -> Result<()> {
 }
 
 // validate a line of file content
-fn vaidate_line(line: &str) -> Result<(i32, String)> {
+fn vaidate_line(line: &str) -> Result<(u32, String)> {
     let mut parts = line.splitn(2, ':');
     let id = parts
         .next()
         .ok_or_else(|| anyhow!("Missing id in line"))?
-        .parse::<i32>()
+        .parse::<u32>()
         .with_context(|| format!("Invalid id in line '{}'", line))?;
     let name = parts
         .next()
