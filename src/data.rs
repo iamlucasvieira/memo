@@ -130,17 +130,6 @@ pub fn write_file(file_path: &PathBuf, content: &str) -> Result<()> {
     Ok(())
 }
 
-/// Append content to a file given its path and name
-pub fn append_file(file_path: &PathBuf, content: &str) -> Result<()> {
-    let mut file = fs::OpenOptions::new()
-        .write(true)
-        .append(true)
-        .open(file_path)
-        .with_context(|| format!("Could not open file '{}'", file_path.display()))?;
-    writeln!(file, "{}", content)?;
-    Ok(())
-}
-
 // validate a line of file content
 fn vaidate_line(line: &str) -> Result<(i32, String)> {
     let mut parts = line.splitn(2, ':');
@@ -241,5 +230,20 @@ mod tests {
         let mut file = fs::File::create(&file_path).unwrap();
         writeln!(file, "test").unwrap();
         assert_eq!(read_file(&file_path).unwrap(), "test\n");
+    }
+
+    #[test]
+    fn test_write_file() {
+        let file_name = "test.txt";
+        let dir = tempdir().unwrap();
+        let mut file_path = dir.path().to_path_buf();
+        file_path.push(file_name);
+        let mut file = fs::File::create(&file_path).unwrap();
+        writeln!(file, "test").unwrap();
+        assert_eq!(read_file(&file_path).unwrap(), "test\n");
+
+        let content = "test2\n";
+        write_file(&file_path, content).unwrap();
+        assert_eq!(read_file(&file_path).unwrap(), content);
     }
 }
