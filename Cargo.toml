@@ -7,7 +7,6 @@ license-file = "LICENSE"
 description = "Create reminders directly from your terminal."
 homepage = "https://github.com/iamlucasvieira/memo"
 repository = "https://github.com/iamlucasvieira/memo"
-documentation = ""
 readme = "README.md"
 keywords = ["memo", "reminder", "terminal", "cli"]
 categories = ["command-line-utilities", "development-tools::cargo-plugins"]
