@@ -1,6 +1,7 @@
 # Memo CLI 📝
 [![Unit Tests](https://github.com/iamlucasvieira/memo/actions/workflows/tests.yml/badge.svg)](https://github.com/iamlucasvieira/memo/actions/workflows/tests.yml)
 [![Linters](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml/badge.svg)](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml)
+![GitHub License](https://img.shields.io/github/license/iamlucasvieira/memo)
 
 ## Introduction 🌟
 
