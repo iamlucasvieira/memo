@@ -76,8 +76,7 @@ jobs:
             *.tar.gz
             *.zip
       - name: Create release
-        if: |
-          github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, '[🎁 release]')
+        if: github.ref == 'refs/heads/main' 
         uses: softprops/action-gh-release@v1
         with:
           draft: true
