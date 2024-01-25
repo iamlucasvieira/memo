@@ -3,6 +3,8 @@
 [![Linters](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml/badge.svg)](https://github.com/iamlucasvieira/memo/actions/workflows/linters.yml)
 [![GitHub License](https://img.shields.io/github/license/iamlucasvieira/memo)](LICENSE)
 [![Crates.io Version](https://img.shields.io/crates/v/memo)](https://crates.io/crates/memo)
+[![Crates.io Total Downloads](https://img.shields.io/crates/d/memo)](https://crates.io/crates/memo)
+
 
 ## Introduction 🌟
 
