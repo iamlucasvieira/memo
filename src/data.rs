@@ -2,6 +2,7 @@ use crate::app;
 use anyhow::{anyhow, Context, Result};
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::path::Path;
 use std::{collections::HashMap, fmt, fs, path::PathBuf};
 
 /// Memo data contains the content of the memo file.
@@ -21,8 +22,15 @@ impl MemoData {
     fn parse(data: String) -> Result<HashMap<u32, String>> {
         data.lines()
             .filter(|line| !line.is_empty())
-            .map(|line| vaidate_line(line))
+            .map(vaidate_line)
             .collect()
+    }
+}
+
+/// Implement Default trait for MemoData
+impl Default for MemoData {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -74,7 +82,7 @@ impl DataFile for MemoData {
                     .ok_or_else(|| anyhow!("Id '{}' not found", id))?
             ));
         }
-        return Ok(s);
+        Ok(s)
     }
 }
 
@@ -99,7 +107,7 @@ pub trait DataFile: fmt::Display {
 }
 
 /// Get file path and file name and check if it exists
-fn file_exist(file_path: &PathBuf) -> Result<bool> {
+fn file_exist(file_path: &Path) -> Result<bool> {
     if file_path.exists() {
         Ok(true)
     } else {
@@ -126,7 +134,7 @@ pub fn write_file(file_path: &PathBuf, content: &str) -> Result<()> {
     let mut temp_file = fs::File::create(&temp_file_path)?;
     temp_file.write_all(content.as_bytes())?;
 
-    fs::rename(&temp_file_path, &file_path)?;
+    fs::rename(&temp_file_path, file_path)?;
     Ok(())
 }
 

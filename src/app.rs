@@ -64,7 +64,7 @@ pub fn init(app_config: &AppConfig) -> Result<()> {
     })?;
 
     // Create file
-    std::fs::File::create(&app_config.data_file_path()).with_context(|| {
+    std::fs::File::create(app_config.data_file_path()).with_context(|| {
         format!(
             "Could not create file '{}'",
             app_config.data_file_path().display()
