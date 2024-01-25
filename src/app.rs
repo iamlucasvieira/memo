@@ -39,7 +39,7 @@ impl AppConfig {
     }
 }
 
-pub fn list(d: &Box<dyn data::DataFile>) -> Result<()> {
+pub fn list(d: &impl data::DataFile) -> Result<()> {
     d.sorted_ids().iter().for_each(|id| {
         println!("{}: {}", id, d.get(*id).unwrap());
     });
@@ -73,7 +73,7 @@ pub fn init(app_config: &AppConfig) -> Result<()> {
     Ok(())
 }
 
-pub fn add(d: &mut Box<dyn data::DataFile>, app_config: &AppConfig, content: String) -> Result<()> {
+pub fn add(d: &mut impl data::DataFile, app_config: &AppConfig, content: String) -> Result<()> {
     let id = d.sorted_ids().last().unwrap_or(&0) + 1;
     d.add(id, &content)?;
     let lines = d.as_string()?;
@@ -81,7 +81,7 @@ pub fn add(d: &mut Box<dyn data::DataFile>, app_config: &AppConfig, content: Str
     Ok(())
 }
 
-pub fn remove(d: &mut Box<dyn data::DataFile>, app_config: &AppConfig, id: u32) -> Result<()> {
+pub fn remove(d: &mut impl data::DataFile, app_config: &AppConfig, id: u32) -> Result<()> {
     d.remove(id)?;
     let lines = d.as_string()?;
     data::write_file(&app_config.data_file_path(), &lines)?;
@@ -138,14 +138,14 @@ mod tests {
 
     #[test]
     fn test_list() {
-        let mut box_memo_data: Box<dyn data::DataFile> = Box::new(MemoData::new());
-        assert_eq!(list(&mut box_memo_data).is_ok(), true);
+        let memo_data = MemoData::new();
+        assert_eq!(list(&memo_data).is_ok(), true);
     }
 
     #[test]
     fn test_list_empty() {
-        let mut box_memo_data: Box<dyn data::DataFile> = Box::new(MemoData::new());
-        assert_eq!(list(&mut box_memo_data).is_ok(), true);
+        let memo_data = MemoData::new();
+        assert_eq!(list(&memo_data).is_ok(), true);
     }
 
     #[test]
@@ -183,10 +183,10 @@ mod tests {
         // Create file
         std::fs::File::create(&app_config.data_file_path()).unwrap();
 
-        let mut box_memo_data: Box<dyn data::DataFile> = Box::new(MemoData::new());
+        let mut memo_data = MemoData::new();
         let content = "test".to_string();
 
-        assert_eq!(add(&mut box_memo_data, &app_config, content).is_ok(), true);
+        assert_eq!(add(&mut memo_data, &app_config, content).is_ok(), true);
     }
 
     #[test]
@@ -198,11 +198,10 @@ mod tests {
         // Create file
         std::fs::File::create(&app_config.data_file_path()).unwrap();
 
-        let mut d = MemoData::new();
+        let mut memo_data = MemoData::new();
         let content = "test".to_string();
-        data::DataFile::add(&mut d, 1, &content).unwrap();
+        data::DataFile::add(&mut memo_data, 1, &content).unwrap();
 
-        let mut box_memo_data: Box<dyn data::DataFile> = Box::new(d);
-        assert_eq!(remove(&mut box_memo_data, &app_config, 1).is_ok(), true);
+        assert_eq!(remove(&mut memo_data, &app_config, 1).is_ok(), true);
     }
 }

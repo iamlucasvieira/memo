@@ -51,26 +51,24 @@ fn main() {
         return; // Optionally exit if the data file cannot be loaded
     }
 
-    let mut box_memo_data: Box<dyn data::DataFile> = Box::new(memo_data);
-
     // Handle message
     let has_message = cli.message.is_some();
     if let Some(message) = cli.message {
-        if let Err(e) = app::add(&mut box_memo_data, &app_config, message.join(" ")) {
+        if let Err(e) = app::add(&mut memo_data, &app_config, message.join(" ")) {
             eprintln!("Error: {}", e);
         }
     }
 
     // Handle remove
     if let Some(id) = cli.remove {
-        if let Err(e) = app::remove(&mut box_memo_data, &app_config, id) {
+        if let Err(e) = app::remove(&mut memo_data, &app_config, id) {
             eprintln!("Error: {}", e);
         }
     }
 
     // Handle list
     if cli.list || !has_message {
-        if let Err(e) = app::list(&mut box_memo_data) {
+        if let Err(e) = app::list(&memo_data) {
             eprintln!("Error: {}", e);
         }
     }
