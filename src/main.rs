@@ -25,9 +25,9 @@ struct Cli {
     /// Initialize the memo file
     init: bool,
 
-    #[arg(short, long, value_parser = clap::value_parser!(u32).range(1..))]
+    #[arg(short, long, value_parser = clap::value_parser!(u32).range(1..), num_args=1..)]
     /// Remove a memo by ID
-    remove: Option<u32>,
+    remove: Option<Vec<u32>>,
 }
 
 fn main() {
