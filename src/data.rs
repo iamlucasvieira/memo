@@ -1,13 +1,64 @@
 use crate::app;
 use anyhow::{anyhow, Context, Result};
+use chrono::prelude::*;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
+use std::str::FromStr;
 use std::{collections::HashMap, fmt, fs, path::PathBuf};
 
-/// Memo data contains the content of the memo file.
+const DATE_TIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
+
+/// Struct that holds all the data of the application
+/// The data is stored in a HashMap where the key is the id of the item and the value is the content.
 pub struct MemoData {
-    content: HashMap<u32, String>,
+    content: HashMap<u32, Content>,
+}
+
+/// Stores the content of a 'memo'
+/// Includes the text, the date and time
+pub struct Content {
+    pub text: String,
+    pub date_time: NaiveDateTime,
+}
+
+impl std::str::FromStr for Content {
+    type Err = anyhow::Error;
+
+    /// Create a Content struct from a string
+    /// String format: %Y-%m-%d %H:%M:%S content
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let parts: Vec<_> = s.trim().splitn(3, ' ').collect();
+
+        if parts.len() != 3 {
+            return Err(anyhow!(
+                "Invalid content '{}'.\nExpected: format: %Y-%m-%d %H:%M:%S content",
+                s
+            ));
+        }
+
+        // Turn date time into NaiveDateTime
+        let date_time = format!("{} {}", parts[0], parts[1]);
+        let date_time = NaiveDateTime::parse_from_str(&date_time, DATE_TIME_FORMAT)
+            .with_context(|| format!("invalid date time '{}'", date_time))?;
+
+        let content = parts[2];
+
+        Ok(Content {
+            text: content.to_string(),
+            date_time,
+        })
+    }
+}
+impl fmt::Display for Content {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} {}",
+            self.date_time.format(DATE_TIME_FORMAT),
+            self.text
+        )
+    }
 }
 
 impl MemoData {
@@ -19,11 +70,16 @@ impl MemoData {
     }
 
     /// parse data from file and return a HashMap
-    fn parse(data: String) -> Result<HashMap<u32, String>> {
+    fn parse(data: String) -> Result<HashMap<u32, Content>> {
         data.lines()
             .filter(|line| !line.is_empty())
             .map(vaidate_line)
             .collect()
+    }
+
+    /// gets the content of an item given its id
+    pub fn get(&self, id: u32) -> Option<&Content> {
+        self.content.get(&id)
     }
 }
 
@@ -50,20 +106,23 @@ impl DataFile for MemoData {
         ids
     }
 
-    /// Return content of item with id
-    fn get(&self, id: u32) -> Option<&String> {
-        self.content.get(&id)
-    }
-
     /// Add item to MemoData
     fn add(&mut self, id: u32, name: &str) -> Result<()> {
         if self.content.contains_key(&id) {
             return Err(anyhow!("Id '{}' already exists", id));
         }
-        self.content.insert(id, name.to_string());
+        let date_time = Local::now().naive_local();
+        self.content.insert(
+            id,
+            Content {
+                text: name.to_string(),
+                date_time,
+            },
+        );
         Ok(())
     }
 
+    /// Remove item from MemoData
     fn remove(&mut self, id: u32) -> Result<()> {
         if !self.content.contains_key(&id) {
             return Err(anyhow!("Id '{}' not found", id));
@@ -71,26 +130,13 @@ impl DataFile for MemoData {
         self.content.remove(&id);
         Ok(())
     }
-
-    fn as_string(&self) -> Result<String> {
-        let mut s = String::new();
-        for id in self.sorted_ids() {
-            s.push_str(&format!(
-                "{}: {}\n",
-                id,
-                self.get(id)
-                    .ok_or_else(|| anyhow!("Id '{}' not found", id))?
-            ));
-        }
-        Ok(s)
-    }
 }
 
 /// Implement Display trait for MemoData
 impl fmt::Display for MemoData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for (id, name) in &self.content {
-            writeln!(f, "{}: {}", id, name)?;
+        for id in self.sorted_ids() {
+            writeln!(f, "{}: {}", id, self.content[&id])?;
         }
         Ok(())
     }
@@ -100,10 +146,8 @@ impl fmt::Display for MemoData {
 pub trait DataFile: fmt::Display {
     fn load(&mut self, app: &app::AppConfig) -> Result<()>;
     fn sorted_ids(&self) -> Vec<u32>;
-    fn get(&self, id: u32) -> Option<&String>;
     fn add(&mut self, id: u32, name: &str) -> Result<()>;
     fn remove(&mut self, id: u32) -> Result<()>;
-    fn as_string(&self) -> Result<String>;
 }
 
 /// Get file path and file name and check if it exists
@@ -127,6 +171,7 @@ pub fn read_file(file_path: &PathBuf) -> Result<String> {
     Ok(contents)
 }
 
+/// Write content to a file given its path and name
 pub fn write_file(file_path: &PathBuf, content: &str) -> Result<()> {
     file_exist(file_path)?;
     let mut temp_file_path = file_path.clone();
@@ -138,21 +183,21 @@ pub fn write_file(file_path: &PathBuf, content: &str) -> Result<()> {
     Ok(())
 }
 
-// validate a line of file content
-fn vaidate_line(line: &str) -> Result<(u32, String)> {
+/// validate a line of file content
+/// Each line must have the format: id: [yyyy-mm-dd hh:mm:ss] content
+fn vaidate_line(line: &str) -> Result<(u32, Content)> {
     let mut parts = line.splitn(2, ':');
     let id = parts
         .next()
         .ok_or_else(|| anyhow!("Missing id in line"))?
         .parse::<u32>()
         .with_context(|| format!("Invalid id in line '{}'", line))?;
-    let name = parts
+    let content = parts
         .next()
-        .and_then(|n| if n.is_empty() { None } else { Some(n) })
-        .ok_or_else(|| anyhow!("Missing content in line '{}'", line))?
-        .trim()
-        .to_string();
-    Ok((id, name))
+        .ok_or_else(|| anyhow!("Missing content in line"))?
+        .trim();
+    let content = Content::from_str(content)?;
+    Ok((id, content))
 }
 
 #[cfg(test)]
@@ -170,7 +215,9 @@ mod tests {
 
     #[test]
     fn test_memo_data_parse() {
-        let data = "1: one\n2: two\n3: three\n".to_string();
+        let data =
+            "1: 2001-01-01 01:01:01 one\n2: 2002-02-02 02:02:02 two\n3: 2003-03-03 03:03:03 three\n"
+                .to_string();
         let d = MemoData::parse(data).unwrap();
         assert_eq!(d.len(), 3);
     }
@@ -194,7 +241,7 @@ mod tests {
         let mut file_dir = data_dir.clone();
         file_dir.push(app_config.data_file());
         let mut file = fs::File::create(&file_dir).unwrap();
-        writeln!(file, "1: one\n2: two\n3: three\n").unwrap();
+        writeln!(file, "1: 2001-01-01 01:01:01 one\n2: 2002-02-02 02:02:02 two\n3: 2003-03-03 03:03:03 three\n").unwrap();
 
         app_config.data_dir = data_dir.clone();
 
@@ -215,7 +262,7 @@ mod tests {
     fn test_memo_data_get() {
         let mut d = MemoData::new();
         assert_eq!(d.add(1, "one").is_ok(), true);
-        assert_eq!(d.get(1).unwrap(), "one");
+        assert_eq!(d.get(1).expect("Id should exist").text, "one");
     }
 
     #[test]
@@ -253,5 +300,23 @@ mod tests {
         let content = "test2\n";
         write_file(&file_path, content).unwrap();
         assert_eq!(read_file(&file_path).unwrap(), content);
+    }
+
+    #[test]
+    fn test_content_from_str() {
+        let content = "2021-01-01 01:01:01 one";
+        let date_time = "2021-01-01 01:01:01";
+        let c = Content::from_str(content).expect("Error creating Content");
+        assert_eq!(c.text, "one");
+        assert_eq!(c.date_time.format(DATE_TIME_FORMAT).to_string(), date_time);
+    }
+
+    #[test]
+    fn test_content_from_str_spaces() {
+        let content = " 2021-01-01 01:01:01 one two three ";
+        let date_time = "2021-01-01 01:01:01";
+        let c = Content::from_str(content).expect("Error creating Content");
+        assert_eq!(c.text, "one two three");
+        assert_eq!(c.date_time.format(DATE_TIME_FORMAT).to_string(), date_time);
     }
 }

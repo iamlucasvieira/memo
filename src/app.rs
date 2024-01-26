@@ -1,7 +1,4 @@
-use anyhow::{anyhow, Context, Result};
 use std::path::PathBuf;
-
-use crate::data;
 
 pub struct AppConfig {
     name: String,
@@ -39,59 +36,9 @@ impl AppConfig {
     }
 }
 
-pub fn list(d: &impl data::DataFile) -> Result<()> {
-    d.sorted_ids().iter().for_each(|id| {
-        println!("{}: {}", id, d.get(*id).unwrap());
-    });
-    Ok(())
-}
-
-pub fn init(app_config: &AppConfig) -> Result<()> {
-    // Check if file exist
-    if app_config.data_file_path().exists() {
-        return Err(anyhow!(
-            "File '{}' already exists",
-            app_config.data_file_path().display()
-        ));
-    }
-
-    // Create directory
-    std::fs::create_dir_all(&app_config.data_dir).with_context(|| {
-        format!(
-            "Could not create directory '{}'",
-            app_config.data_dir.display()
-        )
-    })?;
-
-    // Create file
-    std::fs::File::create(app_config.data_file_path()).with_context(|| {
-        format!(
-            "Could not create file '{}'",
-            app_config.data_file_path().display()
-        )
-    })?;
-    Ok(())
-}
-
-pub fn add(d: &mut impl data::DataFile, app_config: &AppConfig, content: String) -> Result<()> {
-    let id = d.sorted_ids().last().unwrap_or(&0) + 1;
-    d.add(id, &content)?;
-    let lines = d.as_string()?;
-    data::write_file(&app_config.data_file_path(), &lines)?;
-    Ok(())
-}
-
-pub fn remove(d: &mut impl data::DataFile, app_config: &AppConfig, id: u32) -> Result<()> {
-    d.remove(id)?;
-    let lines = d.as_string()?;
-    data::write_file(&app_config.data_file_path(), &lines)?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::MemoData;
 
     #[test]
     fn test_app_config_new() {
@@ -134,74 +81,5 @@ mod tests {
     fn test_app_config_data_file() {
         let app_config = AppConfig::new("memo", "memo.txt");
         assert_eq!(app_config.data_file(), "memo.txt");
-    }
-
-    #[test]
-    fn test_list() {
-        let memo_data = MemoData::new();
-        assert_eq!(list(&memo_data).is_ok(), true);
-    }
-
-    #[test]
-    fn test_list_empty() {
-        let memo_data = MemoData::new();
-        assert_eq!(list(&memo_data).is_ok(), true);
-    }
-
-    #[test]
-    fn test_init() {
-        let mut app_config = AppConfig::new("memo", "memo.txt");
-        let dir = tempfile::tempdir().unwrap();
-        app_config.data_dir = dir.path().to_path_buf();
-
-        assert_eq!(init(&app_config).is_ok(), true);
-    }
-
-    #[test]
-    fn test_init_file_exists() {
-        let mut app_config = AppConfig::new("memo", "memo.txt");
-        let dir = tempfile::tempdir().unwrap();
-        app_config.data_dir = dir.path().to_path_buf();
-
-        std::fs::File::create(app_config.data_file_path()).unwrap();
-
-        assert_eq!(
-            init(&app_config).unwrap_err().to_string(),
-            format!(
-                "File '{}' already exists",
-                app_config.data_file_path().display()
-            )
-        );
-    }
-
-    #[test]
-    fn test_add() {
-        let mut app_config = AppConfig::new("memo", "memo.txt");
-        let dir = tempfile::tempdir().unwrap();
-        app_config.data_dir = dir.path().to_path_buf();
-
-        // Create file
-        std::fs::File::create(&app_config.data_file_path()).unwrap();
-
-        let mut memo_data = MemoData::new();
-        let content = "test".to_string();
-
-        assert_eq!(add(&mut memo_data, &app_config, content).is_ok(), true);
-    }
-
-    #[test]
-    fn test_remove() {
-        let mut app_config = AppConfig::new("memo", "memo.txt");
-        let dir = tempfile::tempdir().unwrap();
-        app_config.data_dir = dir.path().to_path_buf();
-
-        // Create file
-        std::fs::File::create(&app_config.data_file_path()).unwrap();
-
-        let mut memo_data = MemoData::new();
-        let content = "test".to_string();
-        data::DataFile::add(&mut memo_data, 1, &content).unwrap();
-
-        assert_eq!(remove(&mut memo_data, &app_config, 1).is_ok(), true);
     }
 }

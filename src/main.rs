@@ -1,6 +1,9 @@
+use anyhow::Result;
 use clap::Parser;
 use memo::app;
 use memo::data;
+
+mod commands;
 
 const USERDATA: &str = "memo.txt";
 
@@ -33,43 +36,67 @@ fn main() {
 
     // Handle 'Init' command
     if cli.init {
-        match app::init(&app_config) {
-            Ok(_) => println!(
-                "Initialized data file at {}",
-                app_config.data_file_path().display()
-            ),
-            Err(e) => eprintln!("Initialization error: {}", e),
-        }
+        let _ = display_result(
+            commands::init(&app_config),
+            Some("Initialized data file"),
+            Some("Initialization error"),
+        );
+        return;
     }
 
     let mut memo_data = data::MemoData::new();
-    if let Err(e) = data::DataFile::load(&mut memo_data, &app_config) {
-        eprintln!(
-            "Error loading data: {}\nHint: Use the `-i` flag to initialize the data file",
-            e
-        );
-        return; // Optionally exit if the data file cannot be loaded
+
+    if display_result(
+        data::DataFile::load(&mut memo_data, &app_config),
+        None,
+        Some("Could not load data file"),
+    )
+    .is_err()
+    {
+        return; //  exit if the data file cannot be loaded
     }
 
     // Handle message
     let has_message = cli.message.is_some();
+
     if let Some(message) = cli.message {
-        if let Err(e) = app::add(&mut memo_data, &app_config, message.join(" ")) {
-            eprintln!("Error: {}", e);
-        }
+        let _ = display_result(
+            commands::add(&mut memo_data, &app_config, message.join(" ")),
+            None,
+            Some("Could not add memo"),
+        );
     }
 
     // Handle remove
     if let Some(id) = cli.remove {
-        if let Err(e) = app::remove(&mut memo_data, &app_config, id) {
-            eprintln!("Error: {}", e);
-        }
+        let _ = display_result(
+            commands::remove(&mut memo_data, &app_config, id),
+            None,
+            Some("Could not remove memo"),
+        );
     }
 
     // Handle list
     if cli.list || !has_message {
-        if let Err(e) = app::list(&memo_data) {
-            eprintln!("Error: {}", e);
-        }
+        let _ = display_result(
+            commands::list(&memo_data),
+            None,
+            Some("Could not list memos"),
+        );
     }
+}
+
+/// Prints  restult or error to stderror if error found. Option ok and err messages can be customized.
+fn display_result<T>(
+    result: Result<T>,
+    ok_message: Option<&str>,
+    err_message: Option<&str>,
+) -> Result<T> {
+    match (&result, ok_message, err_message) {
+        (Ok(_), Some(ok), _) => eprintln!("{}", ok),
+        (Err(err), _, Some(err_msg)) => eprintln!("{}: {}", err_msg, err),
+        (Err(err), _, None) => eprintln!("{}", err),
+        _ => (),
+    }
+    result
 }
