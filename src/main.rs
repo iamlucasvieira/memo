@@ -19,12 +19,16 @@ struct Cli {
     message: Option<Vec<String>>,
 
     #[arg(short, long)]
-    /// List all memos
+    /// List memos grouped by date
     list: bool,
 
     #[arg(short, long)]
     /// Initialize the memo file
     init: bool,
+
+    #[arg(short, long)]
+    /// List memos sorted by ID
+    sorted: bool,
 
     #[arg(short, long, value_parser = clap::value_parser!(u32).range(1..), num_args=1..)]
     /// Remove a memo by ID
@@ -79,8 +83,14 @@ fn main() {
 
     // Handle list
     if cli.list || !has_message {
+        let mode = if cli.sorted {
+            data::DisplayMode::Sorted
+        } else {
+            data::DisplayMode::GroupByDate
+        };
+
         let _ = display_result(
-            commands::list(&memo_data),
+            commands::list(&memo_data, mode),
             None,
             Some("Could not list memos"),
         );

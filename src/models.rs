@@ -36,6 +36,39 @@ impl MemoData {
     pub fn get(&self, id: u32) -> Option<&Content> {
         self.contents.get(&id)
     }
+
+    /// Returns a vector with the ids of the items sorted
+    pub fn sorted_ids(&self) -> Vec<u32> {
+        let mut ids: Vec<u32> = self.contents.keys().cloned().collect();
+        ids.sort();
+        ids
+    }
+
+    /// Returns string with contents split by date
+    pub fn group_by_date(&self) -> Result<String> {
+        let mut result = String::new();
+        let mut previous_date =
+            NaiveDate::from_ymd_opt(1, 1, 1).with_context(|| "Error creating date NaiveDate")?;
+        for id in self.sorted_ids().iter().rev() {
+            let content = self
+                .contents
+                .get(id)
+                .with_context(|| format!("No item found for id '{}'", id))?;
+
+            let currrent_date = content.date_time.date();
+            let current_time = content.date_time.time();
+
+            if previous_date != currrent_date || result.is_empty() {
+                result.push_str(&format!("\n\n{}", currrent_date.format("%A, %B %e, %Y")));
+            }
+
+            result.push_str(&format!("\n{}: {} {}", id, current_time, content.text));
+            previous_date = currrent_date;
+        }
+        // Remove empty lines at the beginning of the string
+        result = result.trim_start().to_string();
+        Ok(result)
+    }
 }
 
 /// validate a line of file content

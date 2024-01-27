@@ -5,12 +5,18 @@ use std::io::BufReader;
 use std::path::Path;
 use std::{fmt, fs, path::PathBuf};
 
+pub enum DisplayMode {
+    Sorted,
+    GroupByDate,
+}
+
 /// DataFile trait is used to define the methods that a data file must implement.
 pub trait DataFile: fmt::Display {
     fn load(&mut self, app: &app::AppConfig) -> Result<()>;
     fn sorted_ids(&self) -> Vec<u32>;
     fn add(&mut self, id: u32, name: &str) -> Result<()>;
     fn remove(&mut self, id: u32) -> Result<()>;
+    fn display(&self, mode: DisplayMode) -> Result<()>;
 }
 
 /// Get file path and file name and check if it exists

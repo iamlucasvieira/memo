@@ -1,5 +1,5 @@
 use crate::app;
-use crate::data::{read_file, DataFile};
+use crate::data::{read_file, DataFile, DisplayMode};
 use crate::models::{Content, MemoData};
 use anyhow::{anyhow, Context, Result};
 use chrono::prelude::*;
@@ -70,9 +70,7 @@ impl DataFile for MemoData {
 
     /// Return sorted ids of items in MemoData
     fn sorted_ids(&self) -> Vec<u32> {
-        let mut ids: Vec<u32> = self.contents.keys().cloned().collect();
-        ids.sort();
-        ids
+        self.sorted_ids()
     }
 
     /// Add item to MemoData
@@ -97,6 +95,15 @@ impl DataFile for MemoData {
             return Err(anyhow!("Id '{}' not found", id));
         }
         self.contents.remove(&id);
+        Ok(())
+    }
+
+    /// Display MemoData
+    fn display(&self, mode: DisplayMode) -> Result<()> {
+        match mode {
+            DisplayMode::Sorted => println!("{}", self),
+            DisplayMode::GroupByDate => println!("{}", self.group_by_date()?),
+        }
         Ok(())
     }
 }
