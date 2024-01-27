@@ -27,6 +27,7 @@ pub fn remove(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use memo::models;
 
     #[test]
     fn test_remove() {
@@ -37,7 +38,7 @@ mod tests {
         // Create file
         std::fs::File::create(&app_config.data_file_path()).unwrap();
 
-        let mut memo_data = data::MemoData::new();
+        let mut memo_data = models::MemoData::new();
         let content = "test".to_string();
         data::DataFile::add(&mut memo_data, 1, &content).unwrap();
 
@@ -53,7 +54,7 @@ mod tests {
         // Create file
         std::fs::File::create(&app_config.data_file_path()).unwrap();
 
-        let mut memo_data = data::MemoData::new();
+        let mut memo_data = models::MemoData::new();
         let content = "test".to_string();
         data::DataFile::add(&mut memo_data, 1, &content).unwrap();
         data::DataFile::add(&mut memo_data, 2, &content).unwrap();
@@ -74,7 +75,7 @@ mod tests {
         // Create file
         std::fs::File::create(&app_config.data_file_path()).unwrap();
 
-        let mut memo_data = data::MemoData::new();
+        let mut memo_data = models::MemoData::new();
         let content = "test".to_string();
         data::DataFile::add(&mut memo_data, 1, &content).unwrap();
 

@@ -18,6 +18,7 @@ pub fn add(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use memo::models;
 
     #[test]
     fn test_add() {
@@ -28,7 +29,7 @@ mod tests {
         // Create file
         std::fs::File::create(&app_config.data_file_path()).unwrap();
 
-        let mut memo_data = data::MemoData::new();
+        let mut memo_data = models::MemoData::new();
         let content = "test".to_string();
 
         assert_eq!(add(&mut memo_data, &app_config, content).is_ok(), true);

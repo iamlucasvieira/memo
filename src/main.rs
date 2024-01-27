@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use memo::app;
 use memo::data;
+use memo::models;
 
 mod commands;
 
@@ -44,7 +45,7 @@ fn main() {
         return;
     }
 
-    let mut memo_data = data::MemoData::new();
+    let mut memo_data = models::MemoData::new();
 
     if display_result(
         data::DataFile::load(&mut memo_data, &app_config),
