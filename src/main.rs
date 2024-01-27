@@ -3,6 +3,7 @@ use clap::Parser;
 use memo::app;
 use memo::data;
 use memo::models;
+use memo::style;
 
 mod commands;
 
@@ -38,6 +39,7 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
     let app_config = app::AppConfig::new("memo", USERDATA);
+    let has_no_flags = !cli.list && !cli.init && cli.message.is_none() && cli.remove.is_none();
 
     // Handle 'Init' command
     if cli.init {
@@ -61,9 +63,6 @@ fn main() {
         return; //  exit if the data file cannot be loaded
     }
 
-    // Handle message
-    let has_message = cli.message.is_some();
-
     if let Some(message) = cli.message {
         let _ = display_result(
             commands::add(&mut memo_data, &app_config, message.join(" ")),
@@ -82,7 +81,7 @@ fn main() {
     }
 
     // Handle list
-    if cli.list || !has_message {
+    if cli.list || has_no_flags {
         let mode = if cli.sorted {
             data::DisplayMode::Sorted
         } else {
@@ -104,9 +103,13 @@ fn display_result<T>(
     err_message: Option<&str>,
 ) -> Result<T> {
     match (&result, ok_message, err_message) {
-        (Ok(_), Some(ok), _) => eprintln!("{}", ok),
-        (Err(err), _, Some(err_msg)) => eprintln!("{}: {}", err_msg, err),
-        (Err(err), _, None) => eprintln!("{}", err),
+        (Ok(_), Some(ok), _) => eprintln!("{}", style::str(ok, style::Options::Title)),
+        (Err(err), _, Some(err_msg)) => eprintln!(
+            "{}: {}",
+            style::str(err_msg, style::Options::Muted),
+            style::str(&err.to_string(), style::Options::Error)
+        ),
+        (Err(err), _, None) => eprintln!("{}", style::str(&err.to_string(), style::Options::Error)),
         _ => (),
     }
     result

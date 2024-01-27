@@ -1,3 +1,4 @@
+use crate::style;
 use anyhow::{anyhow, Context, Result};
 use chrono::prelude::*;
 use std::collections::HashMap;
@@ -59,10 +60,21 @@ impl MemoData {
             let current_time = content.date_time.time();
 
             if previous_date != currrent_date || result.is_empty() {
-                result.push_str(&format!("\n\n{}", currrent_date.format("%A, %B %e, %Y")));
+                result.push_str(&format!(
+                    "\n\n{}",
+                    style::str(
+                        &currrent_date.format("%A, %B %e, %Y").to_string(),
+                        style::Options::Title
+                    )
+                ));
             }
 
-            result.push_str(&format!("\n{}: {} {}", id, current_time, content.text));
+            let id_and_time = format!("{:0>#2}: {}", id, current_time);
+            result.push_str(&format!(
+                "\n{} {}",
+                style::str(&id_and_time, style::Options::Muted),
+                content.text
+            ));
             previous_date = currrent_date;
         }
         // Remove empty lines at the beginning of the string
