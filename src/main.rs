@@ -11,7 +11,7 @@ const USERDATA: &str = "memo.txt";
 
 #[derive(Parser)]
 #[command(name = "memo")]
-#[command(version = "0.4.0")]
+#[command(version = "0.5.0")]
 #[command(about="A simple memo app", long_about=None)]
 #[command(author = "Lucas Vieira dos Santos")]
 #[command(author, version, about, long_about=None)]
